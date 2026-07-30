@@ -8,8 +8,12 @@ const PORT = 8099;
 const fetch = require('node-fetch');
 const http = require('http');
 const https = require('https');
-const URL = require('url');
+const { URL } = require('url');
 const injector = require('./injector.js');
+
+// Body parsing middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -66,7 +70,7 @@ app.all('*', (req, res) => {
     }
 
     try {
-        const parsedUrl = URL.parse(targetUrl);
+        const parsedUrl = new URL(targetUrl);
         headers['host'] = parsedUrl.host;
     } catch (e) {
         headers['host'] = isCorsBypass ? 'www.youtube.com' : 'www.youtube.com';
@@ -83,7 +87,7 @@ app.all('*', (req, res) => {
     const fetchOptions = {
         method: req.method,
         headers: headers,
-        body: hasBody ? req : undefined,
+        body: hasBody ? JSON.stringify(req.body) : undefined,
         redirect: 'manual'
     };
 
@@ -187,8 +191,40 @@ app.all('*', (req, res) => {
         .catch((error) => {
             console.error(`Proxy Error for [${targetUrl}]: ${error}`);
             console.error(error.stack)
+            
+            // Improved error recovery
             if (!res.headersSent) {
-                res.status(500).send('Proxy Connection Broken');
+                if (error.code === 'ETIMEDOUT' || error.code === 'ECONNRESET') {
+                    // Retry on network errors
+                    console.log(`Retrying request to ${targetUrl}`);
+                    setTimeout(() => {
+                        fetch(targetUrl, fetchOptions)
+                            .then(response => {
+                                res.status(response.status);
+                                const headerKeys = response.headers.raw();
+                                for (const key in headerKeys) {
+                                    if (Object.prototype.hasOwnProperty.call(headerKeys, key)) {
+                                        const lowerKey = key.toLowerCase();
+                                        const skipHeaders = ['content-encoding', 'content-length', 'transfer-encoding', 'content-security-policy', 'alt-svc'];
+                                        if (isCorsBypass) skipHeaders.push('access-control-allow-origin');
+                                        if (skipHeaders.indexOf(lowerKey) !== -1) continue;
+                                        res.setHeader(key, response.headers.get(key));
+                                    }
+                                }
+                                res.setHeader('Access-Control-Allow-Origin', '*');
+                                if (response.body) {
+                                    response.body.pipe(res);
+                                } else {
+                                    res.end();
+                                }
+                            })
+                            .catch(() => {
+                                res.status(503).send('Service Unavailable');
+                            });
+                    }, 1000);
+                } else {
+                    res.status(500).send('Proxy Connection Broken');
+                }
             }
         });
 });
