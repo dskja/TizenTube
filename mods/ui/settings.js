@@ -32,7 +32,7 @@ export default function modernUI(update, parameters) {
             options: [
                 {
                     name: 'GitHub',
-                    link: 'https://github.com/reisxd/TizenTube',
+                    link: 'https://github.com/dskja/TizenTube',
                 },
                 {
                     name: 'YouTube',
@@ -56,11 +56,11 @@ export default function modernUI(update, parameters) {
                 },
                 {
                     name: 'Buy Me A Coffee',
-                    link: 'https://www.buymeacoffee.com/reisxd',
+                    link: 'https://www.buymeacoffee.com/dskja',
                 },
                 {
                     name: 'GitHub Sponsors',
-                    link: 'https:///github.com/sponsors/reisxd',
+                    link: 'https://github.com/sponsors/dskja',
                 }
             ].map((option) => {
                 if (!qrcodes[option.name]) {

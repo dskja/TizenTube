@@ -92,6 +92,10 @@ class SponsorBlockHandler {
         JSON.stringify(categories)
       )}`
     );
+    if (!resp.ok) {
+      console.info(this.videoID, 'SponsorBlock API returned non-OK status:', resp.status);
+      return;
+    }
     const results = await resp.json();
 
     const result = results.find((v) => v.videoID === this.videoID);
