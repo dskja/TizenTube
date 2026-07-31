@@ -37,7 +37,9 @@ function canConnectToDaemon() {
         .then(json => {
             return { canConnectToDaemon: (json.device.developerIP === '127.0.0.1' || json.device.developerIP === '1.0.0.127') && json.device.developerMode === '1', ip: json.device.ip, isConnecting }
         }).catch(e => {
-            return canConnectToDaemon();
+            return new Promise(resolve => {
+                setTimeout(() => resolve(canConnectToDaemon()), 1000);
+            });
         });
 }
 
