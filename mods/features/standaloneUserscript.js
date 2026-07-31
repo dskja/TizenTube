@@ -92,16 +92,20 @@ export default function () {
         };
     }
 
+    const imgSrcDescriptor = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
     Object.defineProperty(HTMLImageElement.prototype, 'src', {
+        get: imgSrcDescriptor ? imgSrcDescriptor.get : function() { return this.getAttribute('src'); },
         set: function(value) {
-            const descriptor = Object.getOwnPropertyDescriptor(Element.prototype, 'setAttribute');
-            descriptor.value.call(this, 'src', redirectUrl(value));
-        }
+            this.setAttribute('src', redirectUrl(value));
+        },
+        configurable: true
     });
+    const scriptSrcDescriptor = Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, 'src');
     Object.defineProperty(HTMLScriptElement.prototype, 'src', {
+        get: scriptSrcDescriptor ? scriptSrcDescriptor.get : function() { return this.getAttribute('src'); },
         set: function(value) {
-            const descriptor = Object.getOwnPropertyDescriptor(Element.prototype, 'setAttribute');
-            descriptor.value.call(this, 'src', redirectUrl(value));
-        }
+            this.setAttribute('src', redirectUrl(value));
+        },
+        configurable: true
     });
 }
